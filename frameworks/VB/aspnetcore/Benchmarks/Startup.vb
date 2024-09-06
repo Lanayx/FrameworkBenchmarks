@@ -1,5 +1,5 @@
-﻿' Copyright (c) .NET Foundation. All rights reserved. 
-' Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information. 
+﻿' Copyright (c) .NET Foundation. All rights reserved.
+' Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 Imports System.Data.Common
 Imports System.Text.Encodings.Web
@@ -8,6 +8,7 @@ Imports Microsoft.AspNetCore.Builder
 Imports Microsoft.AspNetCore.Hosting
 Imports Microsoft.Extensions.Configuration
 Imports Microsoft.Extensions.DependencyInjection
+Imports Microsoft.Extensions.Hosting
 
 Imports MySqlConnector
 Imports Npgsql
@@ -45,7 +46,7 @@ Public Class Startup
 
     End Sub
 
-    Public Sub Configure(ByVal app As IApplicationBuilder)
+    Public Sub Configure(ByVal app As IApplicationBuilder, ByVal lifetime As IHostApplicationLifetime )
 
         app.UsePlainText()
         app.UseJson()
@@ -54,6 +55,8 @@ Public Class Startup
         app.UseSingleQueryRaw()
         app.UseMultipleQueriesRaw()
         app.UseMultipleUpdatesRaw()
+
+        lifetime.ApplicationStopping.Register(Sub() Console.WriteLine($"Fortunes db: {FortunesRawMiddleware.DbTime}ms, render: {FortunesRawMiddleware.RenderTime}ms"))
 
     End Sub
 End Class

@@ -1,6 +1,8 @@
 namespace App
 
 open System
+open System.Diagnostics
+open System.Threading
 open Oxpecker
 open System.Runtime.InteropServices
 
@@ -53,11 +55,19 @@ module HttpHandlers =
         data.Sort FortuneComparer
         data |> HtmlViews.fortunes |> ctx.WriteHtmlViewChunked
 
+    let mutable dbTime = 0L
+    let mutable renderTime = 0L
+
     let fortunes : EndpointHandler =
         fun ctx ->
             task {
+                let sw = Stopwatch.StartNew()
                 let! dbFortunes = loadFortunes ()
-                return! renderFortunes ctx dbFortunes
+                let x = sw.ElapsedMilliseconds
+                Interlocked.Add(&dbTime, sw.ElapsedMilliseconds)
+                do! renderFortunes ctx dbFortunes
+                Interlocked.Add(&renderTime, sw.ElapsedMilliseconds - x)
+                sw.Stop()
             }
 
     let singleQuery : EndpointHandler =
@@ -97,6 +107,7 @@ module HttpHandlers =
             ctx.SetContentType("text/plain")
             ctx.WriteBytes(result)
 
+
     let jsonSimple value : EndpointHandler =
         fun ctx ->
             ctx.SetContentType("application/json")
@@ -130,5 +141,7 @@ module Main =
         app
             .UseRouting()
             .UseOxpecker(HttpHandlers.endpoints) |> ignore
+        app.Lifetime.ApplicationStopping.Register(fun () ->
+            Console.WriteLine($"Fortunes db: {HttpHandlers.dbTime}ms, render: {HttpHandlers.renderTime}ms"))
         app.Run()
         0
