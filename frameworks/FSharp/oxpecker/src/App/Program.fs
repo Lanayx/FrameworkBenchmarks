@@ -40,7 +40,7 @@ module HtmlViews =
 module HttpHandlers =
     open System.Text
     open Microsoft.AspNetCore.Http
-    open SpanJson
+    open System.Text.Json
 
     let private extra =
         {
@@ -98,9 +98,10 @@ module HttpHandlers =
             ctx.WriteBytes(result)
 
     let jsonSimple value : EndpointHandler =
+        let options = JsonSerializerOptions(JsonSerializerDefaults.Web)
         fun ctx ->
             ctx.SetContentType("application/json")
-            JsonSerializer.Generic.Utf8.SerializeAsync<_>(value, stream = ctx.Response.Body).AsTask()
+            JsonSerializer.SerializeAsync<_>(ctx.Response.Body, value, options)
 
     let endpoints =
         [|

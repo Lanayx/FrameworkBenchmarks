@@ -6,7 +6,6 @@ open System.Collections.Generic
 [<AutoOpen>]
 module Common =
 
-    [<Struct>]
     [<CLIMutable>]
     type JsonMessage = {
         message : string
